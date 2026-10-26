@@ -1,7 +1,11 @@
-name: Build and Test Bee Audio Docker
+name: Build Test and Publish Bee Audio Docker
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   docker-build:
@@ -31,6 +35,24 @@ jobs:
       - name: Test real honeybee audio inference
         run: |
           docker run --rm \
+            --entrypoint python \
+            -v "$PWD/tests:/testdata:ro" \
+            bee-audio-xgboost:test \
+            -c "from inference import classify_file; r = classify_file('/testdata/sample_audio.wav'); print('RESULT:', r); assert r['clips'] == 2; assert r['percentages'] == {'active_colony': 100.0, 'inactive_hive': 0.0, 'swarming': 0.0, 'quacking_queen_bee': 0.0}; print('SUCCESS: Docker audio inference matches Kaggle!')"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and publish Docker image
+        run: |
+          docker tag bee-audio-xgboost:test \
+            ghcr.io/akakikunda/bee-audio-xgboost:v1
+
+          docker push ghcr.io/akakikunda/bee-audio-xgboost:v1
             --entrypoint python \
             -v "$PWD/tests:/testdata:ro" \
             bee-audio-xgboost:test \
