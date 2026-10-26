@@ -1,0 +1,26 @@
+{
+  "sample_rate": 22050,
+  "clip_duration": 5,
+  "threshold": 0.5,
+  "classes": [
+    "active_colony",
+    "inactive_hive",
+    "swarming",
+    "pests",
+    "quacking_queen_bee",
+    "queenbee_absent"
+  ],
+  "deployed_classes": [
+    "active_colony",
+    "inactive_hive",
+    "swarming",
+    "quacking_queen_bee"
+  ],
+  "beta_classes": [
+    "quacking_queen_bee"
+  ],
+  "excluded_classes": [
+    "pests",
+    "queenbee_absent"
+  ]
+}
