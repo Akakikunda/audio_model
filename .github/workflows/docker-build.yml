@@ -27,3 +27,46 @@ jobs:
             --entrypoint python \
             bee-audio-xgboost:test \
             -c "from model_loader import load_model; m = load_model('/app/model/xgboost_model.pkl'); print('SUCCESS: Model loaded inside Docker'); print('Classes:', m.classes_)"
+            - name: Test real honeybee audio inference
+        run: |
+          docker run --rm \
+            --entrypoint python \
+            -v "$PWD/tests:/testdata:ro" \
+            bee-audio-xgboost:test \
+            -c "
+          import sys
+          sys.path.insert(0, '/app/runpod')
+
+          from inference import classify_file
+
+          audio_path = '/testdata/sample_audio.wav'
+
+          result = classify_file(audio_path)
+
+          print('====================================')
+          print('HONEYBEE AUDIO INFERENCE TEST')
+          print('====================================')
+
+          print('Duration:', result['duration_seconds'])
+          print('Clips:', result['clips'])
+
+          print('Classification results:')
+
+          for name, percentage in result['percentages'].items():
+              print(name, percentage)
+
+          assert result['clips'] == 2, 'Expected 2 clips'
+
+          expected = {
+              'active_colony': 100.0,
+              'inactive_hive': 0.0,
+              'swarming': 0.0,
+              'quacking_queen_bee': 0.0
+          }
+
+          for name, value in expected.items():
+              assert result['percentages'][name] == value, \
+                  f'Prediction mismatch for {name}'
+
+          print('SUCCESS: Docker audio inference matches Kaggle!')
+          "
